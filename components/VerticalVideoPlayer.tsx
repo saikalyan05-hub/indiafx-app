@@ -1,12 +1,15 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import {
   Bookmark,
   Check,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
+  ChevronUp,
+  Compass,
   Heart,
   Info,
   List,
@@ -29,10 +32,11 @@ import {
   Languages,
   Film,
   Clock,
-  ShieldAlert,
+  Flame,
+  Zap,
 } from "lucide-react";
 import type { Drama } from "@/lib/data";
-import { comments } from "@/lib/data";
+import { comments, dramas } from "@/lib/data";
 import { sound } from "@/lib/soundEffects";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 
@@ -43,6 +47,7 @@ interface VerticalVideoPlayerProps {
   onClose: () => void;
   onSelectEpisode: (drama: Drama, epNum: number) => void;
   onOpenEpisodeList: (drama: Drama) => void;
+  onSelectDrama?: (drama: Drama, epNum?: number) => void;
   onUpdateProgress?: (dramaId: string, episodeNum: number, progressPct: number) => void;
 }
 
@@ -115,6 +120,7 @@ export function VerticalVideoPlayer({
   onClose,
   onSelectEpisode,
   onOpenEpisodeList,
+  onSelectDrama,
   onUpdateProgress,
 }: VerticalVideoPlayerProps) {
   // Player state
@@ -127,6 +133,12 @@ export function VerticalVideoPlayer({
   const [quality, setQuality] = useState<VideoQuality>("1080p");
   const [subtitleLang, setSubtitleLang] = useState<SubtitleLang>("en");
   const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Slide Animation & Dual-Axis Gesture States
+  const [slideDirection, setSlideDirection] = useState<"up" | "down" | "none">("none");
+  const [dragOffsetY, setDragOffsetY] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [showHintPill, setShowHintPill] = useState(true);
 
   // Social & UI states
   const [isLiked, setIsLiked] = useState(false);
@@ -142,6 +154,7 @@ export function VerticalVideoPlayer({
   const [showQualityMenu, setShowQualityMenu] = useState(false);
   const [showSubtitleMenu, setShowSubtitleMenu] = useState(false);
   const [showSpeedMenu, setShowSpeedMenu] = useState(false);
+  const [showSimilarStories, setShowSimilarStories] = useState(false);
 
   // End-of-Episode & Countdown state
   const [isCompleted, setIsCompleted] = useState(false);
@@ -151,12 +164,53 @@ export function VerticalVideoPlayer({
   const [doubleTapSide, setDoubleTapSide] = useState<"left" | "right" | null>(null);
   const lastTapTimeRef = useRef<{ left: number; right: number }>({ left: 0, right: 0 });
 
-  // Refs
+  // Refs for gesture locks & debouncing
   const playerContainerRef = useRef<HTMLDivElement>(null);
+  const videoViewportRef = useRef<HTMLDivElement>(null);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const isTransitioningRef = useRef(false);
+  const wheelAccumulatorRef = useRef(0);
+  const wheelResetTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const touchStateRef = useRef<{
+    startY: number;
+    startX: number;
+    startTime: number;
+    isVerticalLocked: boolean;
+    isHorizontalLocked: boolean;
+  }>({
+    startY: 0,
+    startX: 0,
+    startTime: 0,
+    isVerticalLocked: false,
+    isHorizontalLocked: false,
+  });
 
   useBodyScrollLock(isOpen && !!drama);
+
+  // Auto-hide hint pill after 4.5 seconds
+  useEffect(() => {
+    if (isOpen) {
+      setShowHintPill(true);
+      const timer = setTimeout(() => setShowHintPill(false), 4500);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
+
+  // Add class to body when video player is open to hide bottom navigation & prevent background scrolling
+  useEffect(() => {
+    if (isOpen) {
+      document.body.classList.add("video-player-open");
+      document.documentElement.classList.add("video-player-open");
+    } else {
+      document.body.classList.remove("video-player-open");
+      document.documentElement.classList.remove("video-player-open");
+    }
+    return () => {
+      document.body.classList.remove("video-player-open");
+      document.documentElement.classList.remove("video-player-open");
+    };
+  }, [isOpen]);
 
   // Playback timer ticker
   useEffect(() => {
@@ -190,7 +244,7 @@ export function VerticalVideoPlayer({
     onUpdateProgress?.(drama.id, episodeNumber, pct);
   }, [isOpen, drama, episodeNumber, currentTime, totalDuration, onUpdateProgress]);
 
-  // Reset when episode changes
+  // Reset states when episode changes
   useEffect(() => {
     setCurrentTime(0);
     setIsPlaying(true);
@@ -201,9 +255,16 @@ export function VerticalVideoPlayer({
     setShowQualityMenu(false);
     setShowSubtitleMenu(false);
     setShowSpeedMenu(false);
+    setDragOffsetY(0);
+    setIsDragging(false);
     if (countdownIntervalRef.current) {
       clearInterval(countdownIntervalRef.current);
     }
+    const transitionTimer = setTimeout(() => {
+      isTransitioningRef.current = false;
+      setSlideDirection("none");
+    }, 400);
+    return () => clearTimeout(transitionTimer);
   }, [episodeNumber, drama?.id]);
 
   // Auto-play Next Episode Countdown when completed
@@ -216,6 +277,7 @@ export function VerticalVideoPlayer({
           if (prev === null || prev <= 1) {
             if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
             sound.playEpisodeSelect();
+            setSlideDirection("up");
             onSelectEpisode(drama, episodeNumber + 1);
             return null;
           }
@@ -240,93 +302,7 @@ export function VerticalVideoPlayer({
     return () => document.removeEventListener("fullscreenchange", onFullscreenChange);
   }, []);
 
-  // Keyboard shortcut listener
-  useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => {
-      if (!isOpen) return;
-      const tag = (e.target as HTMLElement | null)?.tagName;
-      if (tag === "INPUT" || tag === "TEXTAREA") return;
-
-      if (e.key === "Escape") {
-        if (showQualityMenu || showSubtitleMenu || showSpeedMenu) {
-          setShowQualityMenu(false);
-          setShowSubtitleMenu(false);
-          setShowSpeedMenu(false);
-          return;
-        }
-        if (showInfoPanel) {
-          setShowInfoPanel(false);
-          return;
-        }
-        if (showComments) {
-          setShowComments(false);
-          return;
-        }
-        if (isFullscreen && document.fullscreenElement) {
-          document.exitFullscreen().catch(() => {});
-          return;
-        }
-        onClose();
-      } else if (e.key === " " || e.key.toLowerCase() === "k") {
-        e.preventDefault();
-        sound.playClick(600);
-        if (isCompleted) {
-          restartEpisode();
-        } else {
-          setIsPlaying((p) => !p);
-        }
-      } else if (e.key.toLowerCase() === "m") {
-        e.preventDefault();
-        sound.playClick(500);
-        setIsMuted((m) => !m);
-      } else if (e.key.toLowerCase() === "f") {
-        e.preventDefault();
-        toggleFullscreen();
-      } else if (e.key.toLowerCase() === "c") {
-        e.preventDefault();
-        sound.playClick(700);
-        setSubtitleLang((s) => (s === "off" ? "en" : "off"));
-      } else if (e.key.toLowerCase() === "i") {
-        e.preventDefault();
-        sound.playClick(650);
-        setShowInfoPanel((v) => !v);
-      } else if (e.key === "ArrowRight" || e.key.toLowerCase() === "l") {
-        e.preventDefault();
-        seekBy(10);
-      } else if (e.key === "ArrowLeft" || e.key.toLowerCase() === "j") {
-        e.preventDefault();
-        seekBy(-10);
-      } else if (e.key === "ArrowUp") {
-        e.preventDefault();
-        setVolume((v) => Math.min(1, Number((v + 0.1).toFixed(1))));
-        setIsMuted(false);
-      } else if (e.key === "ArrowDown") {
-        e.preventDefault();
-        setVolume((v) => Math.max(0, Number((v - 0.1).toFixed(1))));
-      }
-    };
-    window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
-  }, [
-    isOpen,
-    onClose,
-    showComments,
-    showInfoPanel,
-    showQualityMenu,
-    showSubtitleMenu,
-    showSpeedMenu,
-    isFullscreen,
-    isCompleted,
-  ]);
-
-  // Clean controls timer
-  useEffect(() => {
-    return () => {
-      if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
-    };
-  }, []);
-
-  // Hide controls automatically on inactivity when playing
+  // Controls auto-hide timer
   const handleUserActivity = useCallback(() => {
     setShowControls(true);
     if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
@@ -338,13 +314,14 @@ export function VerticalVideoPlayer({
           !showSubtitleMenu &&
           !showSpeedMenu &&
           !showInfoPanel &&
-          !showComments
+          !showComments &&
+          !showSimilarStories
         ) {
           setShowControls(false);
         }
       }, 3500);
     }
-  }, [isPlaying, isCompleted, showQualityMenu, showSubtitleMenu, showSpeedMenu, showInfoPanel, showComments]);
+  }, [isPlaying, isCompleted, showQualityMenu, showSubtitleMenu, showSpeedMenu, showInfoPanel, showComments, showSimilarStories]);
 
   if (!drama) return null;
 
@@ -401,22 +378,25 @@ export function VerticalVideoPlayer({
     if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
   };
 
-  const handleNextEp = () => {
-    if (!drama || !hasNext) return;
+  const handleNextEp = useCallback(() => {
+    if (!drama || !hasNext || isTransitioningRef.current) return;
+    isTransitioningRef.current = true;
     sound.playEpisodeSelect();
+    setSlideDirection("up");
     if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
     setCurrentTime(0);
     onSelectEpisode(drama, episodeNumber + 1);
-  };
+  }, [drama, hasNext, episodeNumber, onSelectEpisode]);
 
-  const handlePrevEp = () => {
-    if (hasPrev) {
-      sound.playEpisodeSelect();
-      if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
-      setCurrentTime(0);
-      onSelectEpisode(drama, episodeNumber - 1);
-    }
-  };
+  const handlePrevEp = useCallback(() => {
+    if (!drama || !hasPrev || isTransitioningRef.current) return;
+    isTransitioningRef.current = true;
+    sound.playEpisodeSelect();
+    setSlideDirection("down");
+    if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+    setCurrentTime(0);
+    onSelectEpisode(drama, episodeNumber - 1);
+  }, [drama, hasPrev, episodeNumber, onSelectEpisode]);
 
   const cancelCountdown = () => {
     sound.playClick(500);
@@ -459,6 +439,228 @@ export function VerticalVideoPlayer({
     }
   };
 
+  // Switch to a new drama from the Similar Stories drawer
+  const handleSwitchDrama = (newDrama: Drama) => {
+    sound.playPageFlip();
+    setShowSimilarStories(false);
+    if (onSelectDrama) {
+      onSelectDrama(newDrama, 1);
+    } else {
+      onSelectEpisode(newDrama, 1);
+    }
+  };
+
+  // Keyboard shortcut listener
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (!isOpen) return;
+      const tag = (e.target as HTMLElement | null)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA") return;
+
+      if (e.key === "Escape") {
+        if (showSimilarStories) {
+          setShowSimilarStories(false);
+          return;
+        }
+        if (showQualityMenu || showSubtitleMenu || showSpeedMenu) {
+          setShowQualityMenu(false);
+          setShowSubtitleMenu(false);
+          setShowSpeedMenu(false);
+          return;
+        }
+        if (showInfoPanel) {
+          setShowInfoPanel(false);
+          return;
+        }
+        if (showComments) {
+          setShowComments(false);
+          return;
+        }
+        if (isFullscreen && document.fullscreenElement) {
+          document.exitFullscreen().catch(() => {});
+          return;
+        }
+        onClose();
+      } else if (e.key === " " || e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        sound.playClick(600);
+        if (isCompleted) {
+          restartEpisode();
+        } else {
+          setIsPlaying((p) => !p);
+        }
+      } else if (e.key === "ArrowDown" || e.key.toLowerCase() === "j") {
+        e.preventDefault();
+        handleNextEp();
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        handlePrevEp();
+      } else if (e.key === "ArrowRight") {
+        if (!showSimilarStories) {
+          e.preventDefault();
+          setShowSimilarStories(true);
+          sound.playBookOpen();
+        }
+      } else if (e.key === "ArrowLeft") {
+        if (showSimilarStories) {
+          e.preventDefault();
+          setShowSimilarStories(false);
+        } else {
+          seekBy(-10);
+        }
+      } else if (e.key.toLowerCase() === "m") {
+        e.preventDefault();
+        sound.playClick(500);
+        setIsMuted((m) => !m);
+      } else if (e.key.toLowerCase() === "f") {
+        e.preventDefault();
+        toggleFullscreen();
+      } else if (e.key.toLowerCase() === "c") {
+        e.preventDefault();
+        sound.playClick(700);
+        setSubtitleLang((s) => (s === "off" ? "en" : "off"));
+      } else if (e.key.toLowerCase() === "i") {
+        e.preventDefault();
+        sound.playClick(650);
+        setShowInfoPanel((v) => !v);
+      } else if (e.key.toLowerCase() === "l") {
+        e.preventDefault();
+        seekBy(10);
+      }
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [
+    isOpen,
+    onClose,
+    showComments,
+    showInfoPanel,
+    showQualityMenu,
+    showSubtitleMenu,
+    showSpeedMenu,
+    showSimilarStories,
+    isFullscreen,
+    isCompleted,
+    handleNextEp,
+    handlePrevEp,
+  ]);
+
+  // Touch Gesture Engine (Dual-Axis: Vertical for Episodes, Horizontal for Similar Stories)
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length !== 1) return;
+    const touch = e.touches[0];
+    touchStateRef.current = {
+      startY: touch.clientY,
+      startX: touch.clientX,
+      startTime: Date.now(),
+      isVerticalLocked: false,
+      isHorizontalLocked: false,
+    };
+    setShowHintPill(false);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (isTransitioningRef.current || e.touches.length !== 1) return;
+    const touch = e.touches[0];
+    const deltaY = touch.clientY - touchStateRef.current.startY;
+    const deltaX = touch.clientX - touchStateRef.current.startX;
+    const absY = Math.abs(deltaY);
+    const absX = Math.abs(deltaX);
+
+    // Axis lock detection
+    if (!touchStateRef.current.isVerticalLocked && !touchStateRef.current.isHorizontalLocked) {
+      if (absY > 8 && absY > absX) {
+        touchStateRef.current.isVerticalLocked = true;
+      } else if (absX > 8 && absX > absY) {
+        touchStateRef.current.isHorizontalLocked = true;
+      }
+    }
+
+    if (touchStateRef.current.isVerticalLocked) {
+      setIsDragging(true);
+      // Boundary resistance (rubber-banding)
+      if ((!hasPrev && deltaY > 0) || (!hasNext && deltaY < 0)) {
+        setDragOffsetY(deltaY * 0.22);
+      } else {
+        setDragOffsetY(deltaY);
+      }
+    } else if (touchStateRef.current.isHorizontalLocked) {
+      // Swipe Right -> Open Similar Stories Drawer
+      if (deltaX < -40 && !showSimilarStories) {
+        setShowSimilarStories(true);
+        sound.playBookOpen();
+        touchStateRef.current.isHorizontalLocked = false;
+      } else if (deltaX > 40 && showSimilarStories) {
+        setShowSimilarStories(false);
+        touchStateRef.current.isHorizontalLocked = false;
+      }
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (touchStateRef.current.isVerticalLocked) {
+      const timeElapsed = Math.max(1, Date.now() - touchStateRef.current.startTime);
+      const velocity = dragOffsetY / timeElapsed;
+
+      // Threshold: > 45px or velocity > 0.4
+      if ((dragOffsetY < -45 || velocity < -0.4) && hasNext) {
+        handleNextEp();
+      } else if ((dragOffsetY > 45 || velocity > 0.4) && hasPrev) {
+        handlePrevEp();
+      }
+    }
+
+    setDragOffsetY(0);
+    setIsDragging(false);
+    touchStateRef.current.isVerticalLocked = false;
+    touchStateRef.current.isHorizontalLocked = false;
+  };
+
+  // Mouse Wheel / Trackpad Gesture Engine (Strict 1-Swipe-Per-Episode with 380ms Lockout)
+  const handleWheel = (e: React.WheelEvent) => {
+    if (showSimilarStories || showComments || showInfoPanel || isTransitioningRef.current) return;
+
+    wheelAccumulatorRef.current += e.deltaY;
+
+    if (wheelResetTimeoutRef.current) clearTimeout(wheelResetTimeoutRef.current);
+    wheelResetTimeoutRef.current = setTimeout(() => {
+      wheelAccumulatorRef.current = 0;
+    }, 200);
+
+    if (wheelAccumulatorRef.current > 45) {
+      // Wheel down => Next Episode
+      if (hasNext) {
+        wheelAccumulatorRef.current = 0;
+        handleNextEp();
+      }
+    } else if (wheelAccumulatorRef.current < -45) {
+      // Wheel up => Prev Episode
+      if (hasPrev) {
+        wheelAccumulatorRef.current = 0;
+        handlePrevEp();
+      }
+    }
+  };
+
+  // Curate Similar Stories categories
+  const similarByGenre = useMemo(() => {
+    return dramas
+      .filter((d) => d.id !== drama.id && d.genre.some((g) => drama.genre.includes(g)))
+      .slice(0, 4);
+  }, [drama]);
+
+  const trendingBlockbusters = useMemo(() => {
+    return dramas
+      .filter((d) => d.id !== drama.id && !similarByGenre.some((s) => s.id === d.id))
+      .slice(0, 4);
+  }, [drama, similarByGenre]);
+
+  const fastPacedSeries = useMemo(() => {
+    return dramas
+      .filter((d) => d.id !== drama.id && (d.genre.includes("Thriller") || d.genre.includes("CEO")))
+      .slice(0, 4);
+  }, [drama]);
+
   const currentSubtitleText =
     subtitleLang !== "off"
       ? subtitleScripts[subtitleLang][activeSubtitleIndex] || subtitleScripts.en[activeSubtitleIndex]
@@ -475,6 +677,7 @@ export function VerticalVideoPlayer({
           aria-label={`${drama.title} - S1 • E${String(episodeNumber).padStart(2, "0")} player`}
           onMouseMove={handleUserActivity}
           onClick={handleUserActivity}
+          onWheel={handleWheel}
         >
           {/* ==================================================== */}
           {/* 1 & 2. CINEMATIC VIEWING ENVIRONMENT & AMBIENT GLOW  */}
@@ -557,50 +760,119 @@ export function VerticalVideoPlayer({
                 </div>
               </div>
 
-              {/* Episode List Trigger */}
-              <button
-                onClick={() => {
-                  sound.playClick(600);
-                  onOpenEpisodeList(drama);
-                }}
-                className="flex items-center justify-center gap-2 w-full rounded-full bg-white/10 hover:bg-white/20 border border-white/15 px-4 py-2.5 text-xs font-bold text-white transition active:scale-95"
-              >
-                <List className="h-3.5 w-3.5" /> All {drama.episodes || 80} Episodes
-              </button>
+              {/* Discovery & Episode List Buttons */}
+              <div className="space-y-2">
+                <button
+                  onClick={() => {
+                    sound.playBookOpen();
+                    setShowSimilarStories(true);
+                  }}
+                  className="flex items-center justify-center gap-2 w-full rounded-full bg-[#e31c3d] hover:bg-[#c41230] px-4 py-2.5 text-xs font-bold text-white transition active:scale-95 shadow-lg"
+                >
+                  <Compass className="h-3.5 w-3.5" /> Similar Stories & Discovery
+                </button>
+                <button
+                  onClick={() => {
+                    sound.playClick(600);
+                    onOpenEpisodeList(drama);
+                  }}
+                  className="flex items-center justify-center gap-2 w-full rounded-full bg-white/10 hover:bg-white/20 border border-white/15 px-4 py-2.5 text-xs font-bold text-white transition active:scale-95"
+                >
+                  <List className="h-3.5 w-3.5" /> All {drama.episodes || 80} Episodes
+                </button>
+              </div>
             </div>
 
             {/* ==================================================== */}
             {/* 1 & 14. CENTERED 9:16 CINEMATIC VIDEO FRAME          */}
             {/* ==================================================== */}
             <motion.div
+              ref={videoViewportRef}
               initial={{ opacity: 0, scale: 0.92, y: 15 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.94, y: 10 }}
               transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
-              className="relative w-full max-w-[min(100%,calc((100dvh-1.25rem)*9/16))] sm:max-w-[420px] aspect-[9/16] max-h-[calc(100dvh-1.25rem)] sm:max-h-[86vh] overflow-hidden rounded-[20px] sm:rounded-[32px] bg-black shadow-[0_30px_100px_rgba(0,0,0,0.98)] border border-white/15 flex flex-col justify-between select-none sm:my-auto shrink-0 group"
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+              className="relative w-full max-w-[min(100%,calc((100dvh-1.25rem)*9/16))] sm:max-w-[420px] aspect-[9/16] max-h-[calc(100dvh-1.25rem)] sm:max-h-[86vh] overflow-hidden rounded-[20px] sm:rounded-[32px] bg-black shadow-[0_30px_100px_rgba(0,0,0,0.98)] border border-white/15 flex flex-col justify-between select-none sm:my-auto shrink-0 group touch-none"
             >
-              {/* Dynamic Video Scene Layer (Cinema Quality Simulation) */}
-              <div className="absolute inset-0 overflow-hidden">
-                <img
-                  src={drama.cover || drama.image}
-                  alt=""
-                  className={`h-full w-full object-cover transition-transform duration-[6000ms] ease-out ${
-                    isPlaying && !isCompleted ? "scale-110 translate-y-[-2%]" : "scale-100"
-                  }`}
-                />
-
-                {/* Soft Vignette & Cinematic Shadow Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/25 to-black/85" />
-                <div
-                  className="absolute inset-0 opacity-25 mix-blend-overlay pointer-events-none"
-                  style={{
-                    background: `radial-gradient(circle at 50% 45%, ${drama.accent}, transparent 75%)`,
+              {/* Dynamic Animated Episode Slide Transition Layer */}
+              <AnimatePresence initial={false} custom={slideDirection}>
+                <motion.div
+                  key={`${drama.id}-ep-${episodeNumber}`}
+                  custom={slideDirection}
+                  variants={{
+                    enter: (direction: string) => ({
+                      y: direction === "up" ? "100%" : direction === "down" ? "-100%" : 0,
+                      opacity: direction === "none" ? 1 : 0.85,
+                      scale: direction === "none" ? 1 : 0.97,
+                    }),
+                    center: {
+                      y: 0,
+                      opacity: 1,
+                      scale: 1,
+                    },
+                    exit: (direction: string) => ({
+                      y: direction === "up" ? "-100%" : direction === "down" ? "100%" : 0,
+                      opacity: 0.8,
+                      scale: 0.97,
+                    }),
                   }}
-                />
-              </div>
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
+                  style={{
+                    transform: isDragging ? `translateY(${dragOffsetY}px)` : undefined,
+                    transition: isDragging ? "none" : undefined,
+                  }}
+                  className="absolute inset-0 overflow-hidden"
+                >
+                  <img
+                    src={drama.cover || drama.image}
+                    alt=""
+                    className={`h-full w-full object-cover transition-transform duration-[6000ms] ease-out ${
+                      isPlaying && !isCompleted ? "scale-110 translate-y-[-2%]" : "scale-100"
+                    }`}
+                  />
+
+                  {/* Soft Vignette & Cinematic Shadow Overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/25 to-black/85" />
+                  <div
+                    className="absolute inset-0 opacity-25 mix-blend-overlay pointer-events-none"
+                    style={{
+                      background: `radial-gradient(circle at 50% 45%, ${drama.accent}, transparent 75%)`,
+                    }}
+                  />
+                </motion.div>
+              </AnimatePresence>
+
+              {/* Floating Interaction Hint Pill */}
+              <AnimatePresence>
+                {showHintPill && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -8, scale: 0.9 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -8, scale: 0.9 }}
+                    transition={{ duration: 0.3 }}
+                    className="pointer-events-none absolute top-14 inset-x-4 z-40 flex justify-center"
+                  >
+                    <div className="flex items-center gap-2 rounded-full bg-black/75 px-3 py-1.5 text-[11px] font-semibold text-white/90 backdrop-blur-xl border border-white/20 shadow-2xl">
+                      <span className="flex items-center gap-1 text-[#f59e0b]">
+                        <ChevronUp className="h-3.5 w-3.5 animate-bounce" /> Swipe ↑ Next
+                      </span>
+                      <span className="text-white/40">•</span>
+                      <span className="flex items-center gap-1 text-[#ff6b81]">
+                        Swipe → Similar <ChevronRight className="h-3 w-3" />
+                      </span>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {/* Double-Tap Gesture Zones (Left = -10s, Right = +10s) */}
-              <div className="absolute inset-0 z-10 grid grid-cols-2">
+              <div className="absolute inset-0 z-10 grid grid-cols-2 pointer-events-auto">
                 <div
                   className="h-full w-full cursor-pointer"
                   onClick={() => handleDoubleTap("left")}
@@ -931,19 +1203,20 @@ export function VerticalVideoPlayer({
               </div>
 
               {/* ==================================================== */}
-              {/* RIGHT FLOATING SOCIAL ENGAGEMENT DOCK               */}
+              {/* RIGHT FLOATING SOCIAL & DISCOVERY ENGAGEMENT DOCK (VERTICALLY CENTERED) */}
               {/* ==================================================== */}
-              <div className="absolute right-2 min-[360px]:right-2.5 sm:right-3.5 bottom-20 min-[360px]:bottom-24 sm:bottom-28 z-30 flex flex-col items-center gap-2 sm:gap-3 text-white">
+              <div className="absolute right-2 min-[360px]:right-2.5 sm:right-3.5 top-1/2 -translate-y-1/2 z-30 flex flex-col items-center gap-2 sm:gap-2.5 text-white">
                 {/* Like Button */}
                 <button
                   onClick={toggleLike}
                   className="group flex flex-col items-center gap-0.5 focus-ring"
+                  aria-label="Like drama"
                 >
                   <div
                     className={`grid h-8 w-8 min-[360px]:h-9 min-[360px]:w-9 sm:h-10 sm:w-10 place-items-center rounded-full backdrop-blur-md transition group-hover:scale-110 active:scale-95 ${
                       isLiked
                         ? "bg-[#e31c3d] text-white shadow-[0_0_20px_rgba(227,28,61,0.6)]"
-                        : "bg-black/50 text-white border border-white/20"
+                        : "bg-black/60 text-white border border-white/20"
                     }`}
                   >
                     <Heart
@@ -961,12 +1234,13 @@ export function VerticalVideoPlayer({
                 <button
                   onClick={toggleBookmark}
                   className="group flex flex-col items-center gap-0.5 focus-ring"
+                  aria-label="Save to watchlist"
                 >
                   <div
                     className={`grid h-8 w-8 min-[360px]:h-9 min-[360px]:w-9 sm:h-10 sm:w-10 place-items-center rounded-full backdrop-blur-md transition group-hover:scale-110 active:scale-95 ${
                       isBookmarked
                         ? "bg-[#2e7d32] text-white shadow-[0_0_20px_rgba(46,125,50,0.6)]"
-                        : "bg-black/50 text-white border border-white/20"
+                        : "bg-black/60 text-white border border-white/20"
                     }`}
                   >
                     <Bookmark
@@ -989,7 +1263,7 @@ export function VerticalVideoPlayer({
                   className="group flex flex-col items-center gap-0.5 focus-ring"
                   aria-label="Open comments"
                 >
-                  <div className="grid h-8 w-8 min-[360px]:h-9 min-[360px]:w-9 sm:h-10 sm:w-10 place-items-center rounded-full bg-black/50 backdrop-blur-md text-white border border-white/20 transition group-hover:scale-110 active:scale-95">
+                  <div className="grid h-8 w-8 min-[360px]:h-9 min-[360px]:w-9 sm:h-10 sm:w-10 place-items-center rounded-full bg-black/60 backdrop-blur-md text-white border border-white/20 transition group-hover:scale-110 active:scale-95">
                     <MessageCircle className="h-3.5 w-3.5 min-[360px]:h-4 min-[360px]:w-4 sm:h-4.5 sm:w-4.5" />
                   </div>
                   <span className="text-[9px] sm:text-[10px] font-bold text-white drop-shadow">
@@ -1001,8 +1275,9 @@ export function VerticalVideoPlayer({
                 <button
                   onClick={handleShare}
                   className="group flex flex-col items-center gap-0.5 focus-ring"
+                  aria-label="Share drama"
                 >
-                  <div className="grid h-8 w-8 min-[360px]:h-9 min-[360px]:w-9 sm:h-10 sm:w-10 place-items-center rounded-full bg-black/50 backdrop-blur-md text-white border border-white/20 transition group-hover:scale-110 active:scale-95">
+                  <div className="grid h-8 w-8 min-[360px]:h-9 min-[360px]:w-9 sm:h-10 sm:w-10 place-items-center rounded-full bg-black/60 backdrop-blur-md text-white border border-white/20 transition group-hover:scale-110 active:scale-95">
                     {copied ? (
                       <Check className="h-3.5 w-3.5 min-[360px]:h-4 min-[360px]:w-4 text-green-400" />
                     ) : (
@@ -1011,6 +1286,23 @@ export function VerticalVideoPlayer({
                   </div>
                   <span className="text-[9px] sm:text-[10px] font-bold text-white drop-shadow">
                     {copied ? "Copied" : "Share"}
+                  </span>
+                </button>
+
+                {/* Similar Stories Discovery Trigger */}
+                <button
+                  onClick={() => {
+                    sound.playBookOpen();
+                    setShowSimilarStories(true);
+                  }}
+                  className="group flex flex-col items-center gap-0.5 focus-ring"
+                  title="Explore Similar Stories (Swipe →)"
+                >
+                  <div className="grid h-8 w-8 min-[360px]:h-9 min-[360px]:w-9 sm:h-10 sm:w-10 place-items-center rounded-full bg-[#e31c3d] text-white shadow-[0_0_20px_rgba(227,28,61,0.5)] border border-white/30 transition group-hover:scale-110 active:scale-95">
+                    <Compass className="h-3.5 w-3.5 min-[360px]:h-4 min-[360px]:w-4 sm:h-4.5 sm:w-4.5 animate-spin-slow" />
+                  </div>
+                  <span className="text-[9px] sm:text-[10px] font-bold text-white drop-shadow">
+                    Similar
                   </span>
                 </button>
               </div>
@@ -1083,9 +1375,9 @@ export function VerticalVideoPlayer({
                         disabled={!hasPrev}
                         onClick={handlePrevEp}
                         className="grid h-8 w-8 place-items-center rounded-full bg-white/10 text-white disabled:opacity-25 hover:bg-white/20 transition active:scale-95"
-                        title="Previous Episode"
+                        title="Previous Episode (↑)"
                       >
-                        <ChevronLeft className="h-4 w-4" />
+                        <ChevronUp className="h-4 w-4" />
                       </button>
 
                       {/* Rewind 10s */}
@@ -1127,9 +1419,9 @@ export function VerticalVideoPlayer({
                         disabled={!hasNext}
                         onClick={handleNextEp}
                         className="grid h-8 w-8 place-items-center rounded-full bg-white/10 text-white disabled:opacity-25 hover:bg-white/20 transition active:scale-95"
-                        title="Next Episode"
+                        title="Next Episode (↓)"
                       >
-                        <ChevronRight className="h-4 w-4" />
+                        <ChevronDown className="h-4 w-4" />
                       </button>
                     </div>
 
@@ -1390,6 +1682,182 @@ export function VerticalVideoPlayer({
                 )}
               </AnimatePresence>
 
+              {/* ==================================================== */}
+              {/* 13. HORIZONTAL SIMILAR STORIES DISCOVERY DRAWER      */}
+              {/* ==================================================== */}
+              <AnimatePresence>
+                {showSimilarStories && (
+                  <>
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="absolute inset-0 z-50 bg-black/60 backdrop-blur-[4px]"
+                      onClick={() => setShowSimilarStories(false)}
+                    />
+                    <motion.div
+                      initial={{ x: "100%" }}
+                      animate={{ x: 0 }}
+                      exit={{ x: "100%" }}
+                      transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+                      className="absolute inset-y-0 right-0 z-50 w-full sm:w-[360px] bg-[#121216]/98 border-l border-white/15 p-4 shadow-[-20px_0_60px_rgba(0,0,0,0.8)] backdrop-blur-2xl text-white flex flex-col justify-between overflow-hidden"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {/* Drawer Header */}
+                      <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                        <div className="flex items-center gap-2">
+                          <span className="grid h-7 w-7 place-items-center rounded-full bg-[#e31c3d] text-white">
+                            <Compass className="h-4 w-4" />
+                          </span>
+                          <div>
+                            <h3 className="font-[family-name:var(--font-playfair)] text-base font-bold text-white">
+                              Similar Stories
+                            </h3>
+                            <p className="text-[10px] text-white/60">Swipe ← or tap to switch</p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => setShowSimilarStories(false)}
+                          className="grid h-8 w-8 place-items-center rounded-full bg-white/10 hover:bg-white/20 text-white transition active:scale-95"
+                          aria-label="Close drawer"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+
+                      {/* Scrollable Categories List */}
+                      <div className="flex-1 overflow-y-auto pr-1 py-3 space-y-5 hide-scrollbar">
+                        {/* Category 1: More Like This */}
+                        <div className="space-y-2.5">
+                          <div className="flex items-center justify-between">
+                            <p className="text-xs font-bold uppercase tracking-wider text-[#ff6b81] flex items-center gap-1.5">
+                              <Sparkles className="h-3.5 w-3.5" /> More in {drama.genre[0]}
+                            </p>
+                            <span className="text-[10px] text-white/50">{similarByGenre.length} Dramas</span>
+                          </div>
+                          <div className="space-y-2">
+                            {similarByGenre.map((item) => (
+                              <div
+                                key={item.id}
+                                onClick={() => handleSwitchDrama(item)}
+                                className="group/item flex items-center gap-3 p-2.5 rounded-2xl bg-white/5 hover:bg-white/12 border border-white/10 transition cursor-pointer active:scale-[0.98]"
+                              >
+                                <div className="relative h-16 w-12 rounded-xl overflow-hidden shrink-0 border border-white/20">
+                                  <img src={item.cover || item.image} alt={item.title} className="h-full w-full object-cover group-hover/item:scale-105 transition" />
+                                  <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover/item:opacity-100 transition">
+                                    <Play className="h-4 w-4 fill-white text-white" />
+                                  </div>
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-[#e31c3d] text-white">
+                                      {item.volume}
+                                    </span>
+                                    <span className="text-[10px] font-semibold text-[#f59e0b] flex items-center gap-0.5">
+                                      <Star className="h-3 w-3 fill-[#f59e0b]" /> {item.rating.split(" ")[0]}
+                                    </span>
+                                  </div>
+                                  <h4 className="font-bold text-xs text-white truncate mt-1">
+                                    {item.title}
+                                  </h4>
+                                  <p className="text-[10px] text-white/60 line-clamp-1 mt-0.5">
+                                    {item.description}
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Category 2: Trending Blockbusters */}
+                        <div className="space-y-2.5">
+                          <div className="flex items-center justify-between">
+                            <p className="text-xs font-bold uppercase tracking-wider text-[#f59e0b] flex items-center gap-1.5">
+                              <Flame className="h-3.5 w-3.5" /> Trending Blockbusters
+                            </p>
+                          </div>
+                          <div className="space-y-2">
+                            {trendingBlockbusters.map((item) => (
+                              <div
+                                key={item.id}
+                                onClick={() => handleSwitchDrama(item)}
+                                className="group/item flex items-center gap-3 p-2.5 rounded-2xl bg-white/5 hover:bg-white/12 border border-white/10 transition cursor-pointer active:scale-[0.98]"
+                              >
+                                <div className="relative h-16 w-12 rounded-xl overflow-hidden shrink-0 border border-white/20">
+                                  <img src={item.cover || item.image} alt={item.title} className="h-full w-full object-cover group-hover/item:scale-105 transition" />
+                                  <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover/item:opacity-100 transition">
+                                    <Play className="h-4 w-4 fill-white text-white" />
+                                  </div>
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-[#f59e0b] text-[#111]">
+                                      TOP RATED
+                                    </span>
+                                    <span className="text-[10px] font-semibold text-white/80">
+                                      {item.episodes} EP
+                                    </span>
+                                  </div>
+                                  <h4 className="font-bold text-xs text-white truncate mt-1">
+                                    {item.title}
+                                  </h4>
+                                  <p className="text-[10px] text-white/60 line-clamp-1 mt-0.5">
+                                    {item.description}
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Category 3: Fast-Paced Micro Series */}
+                        <div className="space-y-2.5">
+                          <div className="flex items-center justify-between">
+                            <p className="text-xs font-bold uppercase tracking-wider text-[#34d399] flex items-center gap-1.5">
+                              <Zap className="h-3.5 w-3.5" /> Fast-Paced Micro Series
+                            </p>
+                          </div>
+                          <div className="space-y-2">
+                            {fastPacedSeries.map((item) => (
+                              <div
+                                key={item.id}
+                                onClick={() => handleSwitchDrama(item)}
+                                className="group/item flex items-center gap-3 p-2.5 rounded-2xl bg-white/5 hover:bg-white/12 border border-white/10 transition cursor-pointer active:scale-[0.98]"
+                              >
+                                <div className="relative h-16 w-12 rounded-xl overflow-hidden shrink-0 border border-white/20">
+                                  <img src={item.cover || item.image} alt={item.title} className="h-full w-full object-cover group-hover/item:scale-105 transition" />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-[#34d399]/20 text-[#34d399]">
+                                    {item.genre.join(" • ")}
+                                  </span>
+                                  <h4 className="font-bold text-xs text-white truncate mt-1">
+                                    {item.title}
+                                  </h4>
+                                  <p className="text-[10px] text-white/60 line-clamp-1 mt-0.5">
+                                    {item.description}
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Drawer Footer */}
+                      <div className="pt-3 border-t border-white/10">
+                        <button
+                          onClick={() => setShowSimilarStories(false)}
+                          className="w-full py-2.5 rounded-full bg-white/10 hover:bg-white/20 text-xs font-bold text-white text-center transition active:scale-95"
+                        >
+                          Return to Video Playback
+                        </button>
+                      </div>
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
+
               {/* Episode Comments Drawer */}
               <AnimatePresence>
                 {showComments && (
@@ -1438,7 +1906,8 @@ export function VerticalVideoPlayer({
                     <span className="text-[10px] text-white/50">{nextEp?.duration || "4:48"}</span>
                   </div>
 
-                  <div className="relative aspect-video rounded-2xl overflow-hidden border border-white/15 group/next cursor-pointer"
+                  <div
+                    className="relative aspect-video rounded-2xl overflow-hidden border border-white/15 group/next cursor-pointer"
                     onClick={handleNextEp}
                   >
                     <img
@@ -1464,18 +1933,28 @@ export function VerticalVideoPlayer({
                 </div>
               )}
 
-              {/* Keyboard Shortcuts Guide */}
-              <div className="rounded-3xl bg-white/5 border border-white/10 p-4 backdrop-blur-md space-y-2">
+              {/* Interaction Guide */}
+              <div className="rounded-3xl bg-white/5 border border-white/10 p-4 backdrop-blur-md space-y-2.5">
                 <p className="text-[10px] font-bold uppercase tracking-wider text-white/60">
-                  Keyboard Shortcuts
+                  Dual-Axis Gestures & Controls
                 </p>
-                <div className="grid grid-cols-2 gap-y-1.5 text-[11px] text-white/70">
-                  <span><kbd className="rounded bg-white/15 px-1.5 py-0.5 font-mono text-[10px] text-white">Space</kbd> Play/Pause</span>
-                  <span><kbd className="rounded bg-white/15 px-1.5 py-0.5 font-mono text-[10px] text-white">F</kbd> Fullscreen</span>
-                  <span><kbd className="rounded bg-white/15 px-1.5 py-0.5 font-mono text-[10px] text-white">← / →</kbd> Seek 10s</span>
-                  <span><kbd className="rounded bg-white/15 px-1.5 py-0.5 font-mono text-[10px] text-white">M</kbd> Mute</span>
-                  <span><kbd className="rounded bg-white/15 px-1.5 py-0.5 font-mono text-[10px] text-white">C</kbd> Subtitles</span>
-                  <span><kbd className="rounded bg-white/15 px-1.5 py-0.5 font-mono text-[10px] text-white">I</kbd> Info</span>
+                <div className="space-y-1.5 text-[11px] text-white/75">
+                  <div className="flex items-center justify-between">
+                    <span>Swipe ↑ / Wheel ↓ / J</span>
+                    <span className="font-bold text-[#f59e0b]">Next Episode</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Swipe ↓ / Wheel ↑ / K</span>
+                    <span className="font-bold text-[#f59e0b]">Prev Episode</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Swipe → / Arrow Right</span>
+                    <span className="font-bold text-[#ff6b81]">Similar Stories</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Double Tap (Left / Right)</span>
+                    <span className="font-bold text-white">±10s Seek</span>
+                  </div>
                 </div>
               </div>
             </div>

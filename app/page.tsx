@@ -143,6 +143,12 @@ export default function HomePage() {
           isOpen={!!selectedDramaForPlayer}
           onClose={() => setSelectedDramaForPlayer(null)}
           onSelectEpisode={(d, ep) => {
+            setSelectedDramaForPlayer(d);
+            setPlayerEpisodeNum(ep);
+            setContinueEpisodeNum(ep);
+          }}
+          onSelectDrama={(d, ep = 1) => {
+            setSelectedDramaForPlayer(d);
             setPlayerEpisodeNum(ep);
             setContinueEpisodeNum(ep);
           }}

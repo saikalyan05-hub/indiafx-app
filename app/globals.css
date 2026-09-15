@@ -212,3 +212,20 @@ a:hover .fx-arrow {
     animation: none !important;
   }
 }
+
+/* Hide bottom navigation bar & prevent background scroll when reel video player is active */
+body.video-player-open nav[data-bottom-navigation],
+html.video-player-open nav[data-bottom-navigation],
+.video-player-open nav[data-bottom-navigation],
+body.video-player-open .bottom-nav-container,
+body.video-player-open [data-bottom-nav] {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+}
+
+body.video-player-open {
+  overflow: hidden !important;
+}
+

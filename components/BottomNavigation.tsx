@@ -18,7 +18,10 @@ export function BottomNavigation() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-black/5 bg-white/92 px-2 py-2 backdrop-blur-xl lg:hidden pb-[max(0.5rem,env(safe-area-inset-bottom,0px))]">
+    <nav
+      data-bottom-navigation
+      className="fixed inset-x-0 bottom-0 z-50 border-t border-black/5 bg-white/92 px-2 py-2 backdrop-blur-xl lg:hidden pb-[max(0.5rem,env(safe-area-inset-bottom,0px))] [.video-player-open_&]:hidden [.video-player-open_&]:pointer-events-none"
+    >
       <ul className="mx-auto flex max-w-lg items-center justify-around">
         {items.map((item) => {
           const active =

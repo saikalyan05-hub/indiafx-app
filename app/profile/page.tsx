@@ -148,6 +148,11 @@ export default function ProfilePage() {
           setPlayerEpisodeNum(ep);
           setContinueEpisodeNum(ep);
         }}
+        onSelectDrama={(d, ep = 1) => {
+          setSelectedDramaForPlayer(d);
+          setPlayerEpisodeNum(ep);
+          setContinueEpisodeNum(ep);
+        }}
         onOpenEpisodeList={(d) => {
           setSelectedDramaForPlayer(null);
           setSelectedDramaForModal(d);

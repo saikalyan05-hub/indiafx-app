@@ -164,7 +164,14 @@ export default function DramaDetailPage() {
         episodeNumber={playerEpisodeNum}
         isOpen={!!selectedDramaForPlayer}
         onClose={() => setSelectedDramaForPlayer(null)}
-        onSelectEpisode={(d, ep) => setPlayerEpisodeNum(ep)}
+        onSelectEpisode={(d, ep) => {
+          setSelectedDramaForPlayer(d);
+          setPlayerEpisodeNum(ep);
+        }}
+        onSelectDrama={(d, ep = 1) => {
+          setSelectedDramaForPlayer(d);
+          setPlayerEpisodeNum(ep);
+        }}
         onOpenEpisodeList={(d) => {
           setSelectedDramaForPlayer(null);
           setSelectedDramaForModal(d);
