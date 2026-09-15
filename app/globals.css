@@ -213,7 +213,10 @@ a:hover .fx-arrow {
   }
 }
 
-/* Hide bottom navigation bar & prevent background scroll when reel video player is active */
+/* Hide bottom navigation bar, header & prevent background scroll when reel video player is active */
+body.video-player-open header,
+html.video-player-open header,
+.video-player-open header,
 body.video-player-open nav[data-bottom-navigation],
 html.video-player-open nav[data-bottom-navigation],
 .video-player-open nav[data-bottom-navigation],
@@ -225,7 +228,8 @@ body.video-player-open [data-bottom-nav] {
   visibility: hidden !important;
 }
 
-body.video-player-open {
+body.video-player-open,
+html.video-player-open {
   overflow: hidden !important;
 }
 
