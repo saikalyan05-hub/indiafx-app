@@ -3,7 +3,6 @@ import { Caveat, Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/Navbar";
 import { BottomNavigation } from "@/components/BottomNavigation";
-import { Footer } from "@/components/Footer";
 import { CinematicBackground } from "@/components/CinematicBackground";
 
 const inter = Inter({
@@ -42,8 +41,7 @@ export default function RootLayout({
       >
         <CinematicBackground />
         <Navbar />
-        <main className="relative min-h-screen overflow-x-clip pb-[calc(5rem+env(safe-area-inset-bottom,16px))] lg:pb-0">{children}</main>
-        <Footer />
+        <main className="relative min-h-screen overflow-x-clip pb-[calc(5rem+env(safe-area-inset-bottom,16px))] lg:pb-12">{children}</main>
         <BottomNavigation />
       </body>
     </html>
