@@ -228,7 +228,7 @@ export function VerticalVideoPlayer({
     <AnimatePresence>
       {isOpen && (
         <div
-          className="fixed inset-0 z-[70] flex items-center justify-center p-2 sm:p-4 md:p-6"
+          className="fixed inset-0 z-[100] flex items-center justify-center p-2 min-[360px]:p-3 sm:p-4 md:p-6 pb-[calc(max(env(safe-area-inset-bottom,0px),12px)+4.25rem)] lg:pb-6 overflow-hidden select-none"
           role="dialog"
           aria-modal="true"
           aria-label={`${drama.title} player`}
@@ -246,11 +246,11 @@ export function VerticalVideoPlayer({
 
           {/* 9:16 Vertical Smartphone / Reel Theatre Frame */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 30 }}
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.92, y: 20 }}
-            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-            className="relative z-10 w-full max-w-[420px] aspect-[9/16] max-h-[92vh] overflow-hidden rounded-[28px] bg-black shadow-[0_25px_80px_rgba(0,0,0,0.85)] border border-white/10 flex flex-col justify-between select-none"
+            exit={{ opacity: 0, scale: 0.92, y: 15 }}
+            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+            className="relative z-10 w-full max-w-[min(100%,calc((100dvh-5.5rem)*9/16))] sm:max-w-[400px] aspect-[9/16] max-h-[calc(100dvh-5.5rem)] sm:max-h-[85vh] overflow-hidden rounded-[24px] sm:rounded-[28px] bg-black shadow-[0_25px_80px_rgba(0,0,0,0.95)] border border-white/10 flex flex-col justify-between select-none my-auto"
           >
             {/* Simulated Live Video Scene Background */}
             <div className="absolute inset-0 overflow-hidden">
@@ -343,20 +343,20 @@ export function VerticalVideoPlayer({
             </div>
 
             {/* RIGHT FLOATING SOCIAL ENGAGEMENT DOCK (Reels / TikTok style) */}
-            <div className="absolute right-2.5 sm:right-3.5 bottom-24 sm:bottom-28 z-20 flex flex-col items-center gap-2.5 sm:gap-4 text-white">
+            <div className="absolute right-2 min-[360px]:right-2.5 sm:right-3.5 bottom-20 min-[360px]:bottom-24 sm:bottom-28 z-20 flex flex-col items-center gap-2 sm:gap-3.5 text-white">
               {/* Like Button */}
               <button
                 onClick={toggleLike}
                 className="group flex flex-col items-center gap-0.5 sm:gap-1 focus-ring"
               >
                 <div
-                  className={`grid h-9 w-9 sm:h-11 sm:w-11 place-items-center rounded-full backdrop-blur-md transition group-hover:scale-110 active:scale-95 ${
+                  className={`grid h-8 w-8 min-[360px]:h-9 min-[360px]:w-9 sm:h-11 sm:w-11 place-items-center rounded-full backdrop-blur-md transition group-hover:scale-110 active:scale-95 ${
                     isLiked
                       ? "bg-[#e31c3d] text-white shadow-[0_0_20px_rgba(227,28,61,0.6)]"
                       : "bg-black/40 text-white border border-white/20"
                   }`}
                 >
-                  <Heart className={`h-4 w-4 sm:h-5 sm:w-5 ${isLiked ? "fill-white" : ""}`} />
+                  <Heart className={`h-3.5 w-3.5 min-[360px]:h-4 min-[360px]:w-4 sm:h-5 sm:w-5 ${isLiked ? "fill-white" : ""}`} />
                 </div>
                 <span className="text-[9px] sm:text-[10px] font-bold text-white drop-shadow">
                   {(likeCount / 1000).toFixed(1)}k
@@ -369,13 +369,13 @@ export function VerticalVideoPlayer({
                 className="group flex flex-col items-center gap-0.5 sm:gap-1 focus-ring"
               >
                 <div
-                  className={`grid h-9 w-9 sm:h-11 sm:w-11 place-items-center rounded-full backdrop-blur-md transition group-hover:scale-110 active:scale-95 ${
+                  className={`grid h-8 w-8 min-[360px]:h-9 min-[360px]:w-9 sm:h-11 sm:w-11 place-items-center rounded-full backdrop-blur-md transition group-hover:scale-110 active:scale-95 ${
                     isBookmarked
                       ? "bg-[#2e7d32] text-white shadow-[0_0_20px_rgba(46,125,50,0.6)]"
                       : "bg-black/40 text-white border border-white/20"
                   }`}
                 >
-                  <Bookmark className={`h-4 w-4 sm:h-5 sm:w-5 ${isBookmarked ? "fill-white" : ""}`} />
+                  <Bookmark className={`h-3.5 w-3.5 min-[360px]:h-4 min-[360px]:w-4 sm:h-5 sm:w-5 ${isBookmarked ? "fill-white" : ""}`} />
                 </div>
                 <span className="text-[9px] sm:text-[10px] font-bold text-white drop-shadow">Save</span>
               </button>
@@ -389,8 +389,8 @@ export function VerticalVideoPlayer({
                 className="group flex flex-col items-center gap-0.5 sm:gap-1 focus-ring"
                 aria-label="Open comments"
               >
-                <div className="grid h-9 w-9 sm:h-11 sm:w-11 place-items-center rounded-full bg-black/40 backdrop-blur-md text-white border border-white/20 transition group-hover:scale-110 active:scale-95">
-                  <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5" />
+                <div className="grid h-8 w-8 min-[360px]:h-9 min-[360px]:w-9 sm:h-11 sm:w-11 place-items-center rounded-full bg-black/40 backdrop-blur-md text-white border border-white/20 transition group-hover:scale-110 active:scale-95">
+                  <MessageCircle className="h-3.5 w-3.5 min-[360px]:h-4 min-[360px]:w-4 sm:h-5 sm:w-5" />
                 </div>
                 <span className="text-[9px] sm:text-[10px] font-bold text-white drop-shadow">2.4k</span>
               </button>
@@ -400,8 +400,8 @@ export function VerticalVideoPlayer({
                 onClick={handleShare}
                 className="group flex flex-col items-center gap-0.5 sm:gap-1 focus-ring"
               >
-                <div className="grid h-9 w-9 sm:h-11 sm:w-11 place-items-center rounded-full bg-black/40 backdrop-blur-md text-white border border-white/20 transition group-hover:scale-110 active:scale-95">
-                  {copied ? <Check className="h-4 w-4 sm:h-5 sm:w-5 text-green-400" /> : <Share2 className="h-4 w-4 sm:h-5 sm:w-5" />}
+                <div className="grid h-8 w-8 min-[360px]:h-9 min-[360px]:w-9 sm:h-11 sm:w-11 place-items-center rounded-full bg-black/40 backdrop-blur-md text-white border border-white/20 transition group-hover:scale-110 active:scale-95">
+                  {copied ? <Check className="h-3.5 w-3.5 min-[360px]:h-4 min-[360px]:w-4 sm:h-5 sm:w-5 text-green-400" /> : <Share2 className="h-3.5 w-3.5 min-[360px]:h-4 min-[360px]:w-4 sm:h-5 sm:w-5" />}
                 </div>
                 <span className="text-[9px] sm:text-[10px] font-bold text-white drop-shadow">
                   {copied ? "Copied" : "Share"}
@@ -410,10 +410,10 @@ export function VerticalVideoPlayer({
             </div>
 
             {/* BOTTOM CONTROLS & SUBTITLE OVERLAYS */}
-            <div className="relative z-20 p-3 sm:p-4 pt-0">
+            <div className="relative z-20 p-2.5 min-[360px]:p-3 sm:p-4 pt-0">
               {/* Dynamic Synchronized Dialogue Subtitle */}
-              <div className="mb-2 sm:mb-3 px-2 text-center pointer-events-none">
-                <span className="inline-block rounded-lg bg-black/70 backdrop-blur-sm px-2.5 sm:px-3 py-1 sm:py-1.5 text-[11px] sm:text-[13px] font-medium text-white shadow-lg border border-white/10 leading-snug">
+              <div className="mb-1.5 min-[360px]:mb-2 sm:mb-3 px-1.5 text-center pointer-events-none">
+                <span className="inline-block rounded-lg bg-black/75 backdrop-blur-sm px-2 min-[360px]:px-2.5 sm:px-3 py-0.5 min-[360px]:py-1 sm:py-1.5 text-[10px] min-[360px]:text-[11px] sm:text-[13px] font-medium text-white shadow-lg border border-white/10 leading-snug max-w-[90%] truncate">
                   &ldquo;{dialogueScript[activeSubtitleIndex]}&rdquo;
                 </span>
               </div>

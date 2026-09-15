@@ -270,7 +270,7 @@ export function EpisodeListModal({
     <AnimatePresence>
       {isOpen && (
         <div
-          className="fixed inset-0 z-[70] flex items-center justify-center p-2 min-[360px]:p-3 sm:p-4 lg:p-6 overflow-y-auto overflow-x-hidden"
+          className="fixed inset-0 z-[100] flex items-center justify-center p-2 min-[360px]:p-3 sm:p-4 lg:p-6 overflow-y-auto overflow-x-hidden select-none"
           role="dialog"
           aria-modal="true"
           aria-label={`${drama.title} episode dossier`}
@@ -299,7 +299,7 @@ export function EpisodeListModal({
 
           {/* 3D Book Container Boundary Wrapper */}
           <div
-            className="relative z-10 w-full max-w-[1140px] my-auto max-h-[calc(100dvh-16px)] sm:max-h-[92vh] flex flex-col"
+            className="relative z-10 w-full max-w-[calc(100vw-16px)] sm:max-w-[1080px] my-auto max-h-[calc(100dvh-16px)] sm:max-h-[90vh] flex flex-col"
             style={{ perspective: 2400 }}
           >
             {/* Main Physical Book Shell Container */}
@@ -308,7 +308,7 @@ export function EpisodeListModal({
               initial="closed"
               animate="open"
               exit="exit"
-              className="relative w-full rounded-[20px] sm:rounded-[24px] bg-[#fbf9f6] border border-[#e4dcce] border-b-[5px] border-r-[4px] border-l-[3px] shadow-[0_25px_90px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col max-h-[calc(100dvh-16px)] sm:max-h-[92vh]"
+              className="relative w-full rounded-[20px] sm:rounded-[24px] bg-[#fbf9f6] border border-[#e4dcce] border-b-[4px] border-r-[3px] border-l-[2px] shadow-[0_25px_90px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col max-h-[calc(100dvh-16px)] sm:max-h-[90vh]"
               style={{
                 transformStyle: "preserve-3d",
               }}
@@ -319,7 +319,7 @@ export function EpisodeListModal({
                   sound.playClick(500);
                   onClose();
                 }}
-                className="focus-ring absolute right-3 top-3 sm:right-4 sm:top-4 z-50 grid h-8 w-8 min-[360px]:h-9 min-[360px]:w-9 sm:h-10 sm:w-10 place-items-center rounded-full bg-white/95 text-[#111] shadow-[0_4px_16px_rgba(0,0,0,0.18)] ring-1 ring-black/10 transition-transform duration-200 hover:scale-110 active:scale-95"
+                className="focus-ring absolute right-2.5 top-2.5 sm:right-4 sm:top-4 z-50 grid h-8 w-8 min-[360px]:h-9 min-[360px]:w-9 sm:h-10 sm:w-10 place-items-center rounded-full bg-white/95 text-[#111] shadow-[0_4px_16px_rgba(0,0,0,0.18)] ring-1 ring-black/10 transition-transform duration-200 hover:scale-110 active:scale-95"
                 aria-label="Close modal"
               >
                 <X className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -537,56 +537,56 @@ export function EpisodeListModal({
                 initial="closed"
                 animate="open"
                 exit="exit"
-                className="grid lg:grid-cols-2 overflow-y-auto lg:overflow-hidden max-h-[calc(100dvh-16px)] sm:max-h-[92vh] w-full"
+                className="grid lg:grid-cols-2 overflow-y-auto lg:overflow-hidden max-h-[calc(100dvh-16px)] sm:max-h-[90vh] w-full"
               >
                 {/* LEFT PAGE: Drama Dossier */}
-                <div className="relative p-4 min-[360px]:p-5 sm:p-7 lg:p-8 xl:p-9 flex flex-col justify-between border-b border-[#e8e2d8] lg:border-b-0 lg:border-r bg-white/85 lg:overflow-y-auto hide-scrollbar">
+                <div className="relative p-3.5 min-[360px]:p-4 sm:p-6 lg:p-8 xl:p-9 flex flex-col justify-between border-b border-[#e8e2d8] lg:border-b-0 lg:border-r bg-white/85 lg:overflow-y-auto hide-scrollbar min-w-0">
                   <div>
                     {/* Top Badges & Ratings */}
-                    <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 pr-8 sm:pr-10">
-                      <span className="rounded-full bg-[#e31c3d] px-2.5 sm:px-3 py-1 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-white shadow-sm">
+                    <div className="flex flex-wrap items-center gap-1.5 sm:gap-2.5 pr-8 sm:pr-10">
+                      <span className="rounded-full bg-[#e31c3d] px-2 sm:px-3 py-0.5 sm:py-1 text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-white shadow-sm">
                         {drama.volume}
                       </span>
-                      <span className="flex items-center gap-1 text-[11px] sm:text-xs font-semibold text-[#666] bg-[#f5efe6] px-2.5 py-0.5 rounded-full">
+                      <span className="flex items-center gap-1 text-[10px] sm:text-xs font-semibold text-[#666] bg-[#f5efe6] px-2 sm:px-2.5 py-0.5 rounded-full">
                         <Star className="h-3 w-3 sm:h-3.5 sm:w-3.5 fill-[#f59e0b] text-[#f59e0b]" />
                         {drama.rating}
                       </span>
-                      <span className="text-[11px] sm:text-xs font-medium text-[#777] bg-[#f5efe6] px-2.5 py-0.5 rounded-full">
+                      <span className="text-[10px] sm:text-xs font-medium text-[#777] bg-[#f5efe6] px-2 sm:px-2.5 py-0.5 rounded-full">
                         {drama.releaseYear} • {drama.episodes} EP
                       </span>
                     </div>
 
                     {/* Title */}
-                    <h2 className="mt-3 sm:mt-4 font-[family-name:var(--font-playfair)] text-[24px] min-[360px]:text-[28px] sm:text-[34px] lg:text-[36px] xl:text-[40px] leading-[1.05] font-bold text-[#111] break-words">
+                    <h2 className="mt-2.5 sm:mt-4 font-[family-name:var(--font-playfair)] text-[22px] min-[360px]:text-[26px] sm:text-[34px] lg:text-[36px] xl:text-[40px] leading-[1.08] font-bold text-[#111] break-words">
                       {drama.title}
                     </h2>
 
                     {/* Genre Tagline */}
-                    <p className="mt-1.5 sm:mt-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-[#e31c3d]">
+                    <p className="mt-1 sm:mt-2 text-[10px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-[#e31c3d]">
                       {drama.genre.join(" • ")}
                     </p>
 
                     {/* Synopsis */}
-                    <p className="mt-3 sm:mt-4 text-xs sm:text-[14px] leading-relaxed text-[#4a4a4a]">
+                    <p className="mt-2.5 sm:mt-4 text-xs sm:text-[14px] leading-relaxed text-[#4a4a4a]">
                       {drama.description}
                     </p>
 
                     {/* Cast & Credits Dossier */}
-                    <div className="mt-4 sm:mt-5 rounded-2xl bg-[#f7f4ee] p-3 sm:p-4 border border-[#ece4d8]">
+                    <div className="mt-3.5 sm:mt-5 rounded-2xl bg-[#f7f4ee] p-2.5 sm:p-4 border border-[#ece4d8]">
                       <div className="grid grid-cols-2 gap-2 sm:gap-3 text-xs">
                         <div className="min-w-0">
-                          <p className="font-bold text-[#888] uppercase tracking-wider text-[10px]">
+                          <p className="font-bold text-[#888] uppercase tracking-wider text-[9px] sm:text-[10px]">
                             Director
                           </p>
-                          <p className="mt-0.5 font-semibold text-[#111] truncate">
+                          <p className="mt-0.5 font-semibold text-[#111] truncate text-[11px] sm:text-xs">
                             {drama.director}
                           </p>
                         </div>
                         <div className="min-w-0">
-                          <p className="font-bold text-[#888] uppercase tracking-wider text-[10px]">
+                          <p className="font-bold text-[#888] uppercase tracking-wider text-[9px] sm:text-[10px]">
                             Cast
                           </p>
-                          <p className="mt-0.5 font-semibold text-[#111] truncate">
+                          <p className="mt-0.5 font-semibold text-[#111] truncate text-[11px] sm:text-xs">
                             {drama.cast.join(", ")}
                           </p>
                         </div>
@@ -595,13 +595,13 @@ export function EpisodeListModal({
                   </div>
 
                   {/* Left Page Actions */}
-                  <div className="mt-5 sm:mt-6 pt-4 sm:pt-5 border-t border-[#ece8e2] flex flex-wrap items-center gap-2 sm:gap-3">
+                  <div className="mt-4 sm:mt-6 pt-3 sm:pt-5 border-t border-[#ece8e2] flex flex-wrap items-center gap-2 sm:gap-3">
                     <button
                       onClick={() => {
                         sound.playPageFlip();
                         onSelectEpisode(drama, drama.lastEpisodeWatched || 1);
                       }}
-                      className="focus-ring flex-1 min-w-[150px] sm:flex-initial inline-flex items-center justify-center gap-2 rounded-full bg-[#111] px-5 sm:px-6 py-2.5 sm:py-3.5 text-xs sm:text-sm font-bold text-white shadow-[0_8px_20px_rgba(0,0,0,0.18)] transition-all hover:bg-[#e31c3d] hover:scale-105 active:scale-95"
+                      className="focus-ring flex-1 min-w-[130px] sm:flex-initial inline-flex items-center justify-center gap-1.5 sm:gap-2 rounded-full bg-[#111] px-4 sm:px-6 py-2.5 sm:py-3.5 text-xs sm:text-sm font-bold text-white shadow-[0_8px_20px_rgba(0,0,0,0.18)] transition-all hover:bg-[#e31c3d] hover:scale-105 active:scale-95"
                     >
                       <Play className="h-3.5 w-3.5 sm:h-4 sm:w-4 fill-white" />
                       Play Episode {drama.lastEpisodeWatched || 1}
@@ -612,7 +612,7 @@ export function EpisodeListModal({
                       whileTap={{ scale: 0.88 }}
                       animate={isLiked ? { scale: [1, 1.18, 1] } : { scale: 1 }}
                       transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-                      className={`focus-ring grid h-9 w-9 sm:h-11 sm:w-11 place-items-center rounded-full border transition hover:scale-105 shrink-0 ${
+                      className={`focus-ring grid h-8 w-8 min-[360px]:h-9 min-[360px]:w-9 sm:h-11 sm:w-11 place-items-center rounded-full border transition hover:scale-105 shrink-0 ${
                         isLiked
                           ? "bg-[#ffebee] border-[#e31c3d] text-[#e31c3d]"
                           : "bg-white border-[#ddd] text-[#555] hover:text-[#111]"
@@ -627,7 +627,7 @@ export function EpisodeListModal({
                       whileTap={{ scale: 0.88 }}
                       animate={isBookmarked ? { scale: [1, 1.16, 1] } : { scale: 1 }}
                       transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-                      className={`focus-ring grid h-9 w-9 sm:h-11 sm:w-11 place-items-center rounded-full border transition hover:scale-105 shrink-0 ${
+                      className={`focus-ring grid h-8 w-8 min-[360px]:h-9 min-[360px]:w-9 sm:h-11 sm:w-11 place-items-center rounded-full border transition hover:scale-105 shrink-0 ${
                         isBookmarked
                           ? "bg-[#e8f5e9] border-[#2e7d32] text-[#2e7d32]"
                           : "bg-white border-[#ddd] text-[#555] hover:text-[#111]"
@@ -639,7 +639,7 @@ export function EpisodeListModal({
 
                     <button
                       onClick={handleShare}
-                      className="focus-ring grid h-9 w-9 sm:h-11 sm:w-11 place-items-center rounded-full bg-white border border-[#ddd] text-[#555] transition hover:text-[#111] hover:scale-105 shrink-0"
+                      className="focus-ring grid h-8 w-8 min-[360px]:h-9 min-[360px]:w-9 sm:h-11 sm:w-11 place-items-center rounded-full bg-white border border-[#ddd] text-[#555] transition hover:text-[#111] hover:scale-105 shrink-0"
                       aria-label="Share drama link"
                     >
                       {copied ? (
@@ -652,22 +652,22 @@ export function EpisodeListModal({
                 </div>
 
                 {/* RIGHT PAGE: Episode Directory */}
-                <div className="p-4 min-[360px]:p-5 sm:p-7 lg:p-8 xl:p-9 flex flex-col justify-between bg-[#faf7f3] lg:overflow-y-auto hide-scrollbar">
+                <div className="p-3.5 min-[360px]:p-4 sm:p-6 lg:p-8 xl:p-9 flex flex-col justify-between bg-[#faf7f3] lg:overflow-y-auto hide-scrollbar min-w-0">
                   <div>
-                    {/* Header + Episode Tabs (Responsive Header) */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 sm:pb-4 border-b border-[#ece6dc]">
+                    {/* Header + Episode Tabs (Responsive Wrapped Header - No Horizontal Scrollbar) */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 sm:pb-4 border-b border-[#ece6dc]">
                       <div className="min-w-0">
-                        <h3 className="font-[family-name:var(--font-playfair)] text-xl sm:text-2xl font-bold text-[#111]">
+                        <h3 className="font-[family-name:var(--font-playfair)] text-lg sm:text-2xl font-bold text-[#111]">
                           Episode Index
                         </h3>
-                        <p className="text-[11px] sm:text-xs text-[#888] truncate">
+                        <p className="text-[10px] sm:text-xs text-[#888] truncate">
                           Select any episode to begin watching immediately
                         </p>
                       </div>
 
-                      {/* Episode Batch Tabs - Horizontally scrollable on mobile */}
+                      {/* Episode Batch Tabs - Compressed Wrapped Badges */}
                       {totalTabs > 1 && (
-                        <div className="flex items-center gap-1 overflow-x-auto hide-scrollbar max-w-full rounded-full bg-[#eae3d5] p-1 text-xs shrink-0">
+                        <div className="flex flex-wrap items-center gap-1 rounded-2xl bg-[#eae3d5] p-1 text-xs shrink-0">
                           {Array.from({ length: totalTabs }, (_, i) => (
                             <button
                               key={i}
@@ -675,7 +675,7 @@ export function EpisodeListModal({
                                 sound.playClick(750);
                                 setActiveTab(i + 1);
                               }}
-                              className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold transition ${
+                              className={`rounded-full px-2 sm:px-2.5 py-0.5 sm:py-1 text-[10px] sm:text-[11px] font-bold transition ${
                                 activeTab === i + 1
                                   ? "bg-white text-[#111] shadow-sm"
                                   : "text-[#777] hover:text-[#111]"
