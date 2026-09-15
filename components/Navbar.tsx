@@ -85,10 +85,10 @@ export function Navbar() {
   return (
     <>
       <header className="sticky top-0 z-50 bg-[#f7f5f2]/92 backdrop-blur-xl border-b border-[#ece6dc]/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)] transition-all">
-        <div className="mx-auto flex w-full max-w-[1600px] items-center justify-between gap-2 min-[360px]:gap-3 px-3 min-[360px]:px-4 py-2.5 sm:py-3.5 sm:px-8 lg:px-12 xl:px-16">
+        <div className="mx-auto flex w-full max-w-[1600px] items-center justify-between gap-1.5 min-[360px]:gap-2.5 sm:gap-3 px-2.5 min-[360px]:px-3.5 sm:px-8 lg:px-12 xl:px-16 py-2 sm:py-3.5">
 
           {/* Brand Logo & Desktop Nav */}
-          <div className="flex items-center gap-4 lg:gap-12 shrink-0">
+          <div className="flex items-center gap-3 lg:gap-12 shrink-0">
             <motion.div
               initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
@@ -148,11 +148,12 @@ export function Navbar() {
               sound.playClick(700);
               setSearchOpen(true);
             }}
-            className="fx-search focus-ring flex h-8 min-[360px]:h-9 sm:h-10 flex-1 max-w-[340px] items-center gap-2 rounded-full bg-white px-2.5 min-[360px]:px-3.5 sm:px-4 text-left text-[11px] min-[360px]:text-xs sm:text-sm text-[#8a857f] shadow-[0_2px_8px_rgba(0,0,0,0.04)] ring-1 ring-black/10 hover:ring-[#e31c3d]/35 mx-1 sm:mx-4"
+            className="fx-search focus-ring flex h-8 min-[360px]:h-9 sm:h-10 min-w-0 flex-1 max-w-[120px] min-[360px]:max-w-[150px] min-[420px]:max-w-[190px] sm:max-w-[340px] items-center gap-1.5 min-[360px]:gap-2 rounded-full bg-white px-2 min-[360px]:px-3 sm:px-4 text-left text-[11px] min-[360px]:text-xs sm:text-sm text-[#8a857f] shadow-[0_2px_8px_rgba(0,0,0,0.04)] ring-1 ring-black/10 hover:ring-[#e31c3d]/35 mx-0.5 min-[360px]:mx-1 sm:mx-4"
             aria-label="Search 500+ micro dramas..."
           >
             <Search className="h-3.5 w-3.5 text-[#555] shrink-0" />
-            <span className="truncate">Search 500+ micro dramas...</span>
+            <span className="truncate sm:hidden">Search...</span>
+            <span className="truncate hidden sm:inline">Search 500+ micro dramas...</span>
             <kbd className="ml-auto hidden rounded bg-[#f4eee6] px-1.5 py-0.5 text-[10px] font-bold text-[#777] xl:inline-block">
               ⌘K
             </kbd>
@@ -185,7 +186,7 @@ export function Navbar() {
                   setNotesOpen((v) => !v);
                 }}
                 className={cn(
-                  "focus-ring relative grid h-8 w-8 min-[360px]:h-9 min-[360px]:w-9 sm:h-10 sm:w-10 place-items-center rounded-full shadow-sm ring-1 transition",
+                  "focus-ring relative grid h-8 w-8 min-[360px]:h-9 min-[360px]:w-9 sm:h-10 sm:w-10 place-items-center rounded-full shadow-sm ring-1 transition shrink-0",
                   pathname === "/notifications"
                     ? "bg-[#e31c3d] text-white ring-[#e31c3d]"
                     : "bg-white text-[#222] ring-black/10 hover:bg-[#fcfaf7]"
@@ -203,7 +204,7 @@ export function Navbar() {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 8, scale: 0.96 }}
                     transition={{ duration: 0.2 }}
-                    className="absolute right-0 mt-3 w-80 rounded-2xl bg-white p-4 shadow-[0_20px_50px_rgba(0,0,0,0.14)] ring-1 ring-black/10 z-50"
+                    className="fixed sm:absolute right-3 sm:right-0 top-[54px] sm:top-auto sm:mt-3 w-[calc(100vw-24px)] sm:w-80 max-w-[340px] rounded-2xl bg-white p-4 shadow-[0_20px_50px_rgba(0,0,0,0.14)] ring-1 ring-black/10 z-50"
                   >
                     <div className="flex items-center justify-between border-b border-[#f0eae0] pb-2.5">
                       <p className="text-xs font-bold uppercase tracking-wider text-[#e31c3d] flex items-center gap-1.5">
@@ -270,7 +271,7 @@ export function Navbar() {
               href="/profile"
               onClick={() => sound.playClick(600)}
               className={cn(
-                "focus-ring hidden sm:block overflow-hidden rounded-full ring-2 transition-all shadow-sm",
+                "focus-ring hidden sm:block overflow-hidden rounded-full ring-2 transition-all shadow-sm shrink-0",
                 pathname === "/profile"
                   ? "ring-[#e31c3d]"
                   : "ring-[#ffebee] hover:ring-[#e31c3d]"
@@ -291,10 +292,10 @@ export function Navbar() {
                 sound.playClick(550);
                 setMenuOpen((v) => !v);
               }}
-              className="focus-ring grid h-10 w-10 place-items-center rounded-full bg-white text-[#222] shadow-sm ring-1 ring-black/5 md:hidden"
+              className="focus-ring grid h-8 w-8 min-[360px]:h-9 min-[360px]:w-9 sm:h-10 sm:w-10 place-items-center rounded-full bg-white text-[#222] shadow-sm ring-1 ring-black/5 md:hidden shrink-0"
               aria-label={menuOpen ? "Close menu" : "Open menu"}
             >
-              {menuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+              {menuOpen ? <X className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> : <Menu className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
             </button>
           </div>
         </div>
