@@ -139,9 +139,9 @@ function GenresInner() {
             </p>
           </div>
         ) : (
-          <Stagger className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5" stagger={0.045}>
+          <Stagger key={selectedGenre} immediate className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5" stagger={0.035} delay={0.02}>
             {filteredDramas.map((d) => (
-              <StaggerItem key={d.id}>
+              <StaggerItem key={`${selectedGenre}-${d.id}`}>
                 <DramaCard
                   drama={d}
                   fluid

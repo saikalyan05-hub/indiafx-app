@@ -829,10 +829,11 @@ export function VerticalVideoPlayer({
                         sound.playClick(500);
                         onClose();
                       }}
-                      className="grid h-8 w-8 sm:h-9 sm:w-9 place-items-center rounded-full bg-black/50 backdrop-blur-md text-white border border-white/20 hover:bg-[#e31c3d] hover:border-[#e31c3d] transition active:scale-95 shrink-0"
+                      className="grid h-8 w-8 sm:h-9 sm:w-9 place-items-center rounded-full bg-black/80 backdrop-blur-md text-white border border-white/30 hover:bg-[#e31c3d] hover:border-[#e31c3d] transition active:scale-95 shrink-0 shadow-md"
                       aria-label="Back / Close player"
+                      title="Back to Catalog"
                     >
-                      <ChevronLeft className="h-5 w-5" />
+                      <ChevronLeft className="h-5 w-5 text-white" />
                     </button>
 
                     <div className="min-w-0">

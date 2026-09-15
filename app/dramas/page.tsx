@@ -47,9 +47,9 @@ export default function DramasPage() {
           <p className="mt-2 text-xs text-[#666]">Reset the genre filter to browse the full collection.</p>
         </div>
       ) : (
-        <Stagger className="mt-8 grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5" stagger={0.045} delay={0.04}>
+        <Stagger key={genre} immediate className="mt-8 grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5" stagger={0.035} delay={0.02}>
           {items.map((d) => (
-            <StaggerItem key={d.id}>
+            <StaggerItem key={`${genre}-${d.id}`}>
               <DramaCard
                 drama={d}
                 fluid

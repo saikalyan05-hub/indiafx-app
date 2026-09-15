@@ -1,7 +1,7 @@
 "use client";
 
 import { notFound, useParams } from "next/navigation";
-import { BookOpen, Play, Star } from "lucide-react";
+import { BookOpen, ChevronLeft, Play, Star } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { dramas, getDrama, type Drama } from "@/lib/data";
@@ -35,7 +35,20 @@ export default function DramaDetailPage() {
   };
 
   return (
-    <div className="mx-auto max-w-[1480px] px-4 py-8 sm:px-6 lg:px-10 select-none">
+    <div className="mx-auto max-w-[1480px] px-4 py-6 sm:px-6 lg:px-10 select-none">
+      {/* Top Back Navigation Bar */}
+      <div className="mb-6 flex items-center justify-between">
+        <Link
+          href="/dramas"
+          className="inline-flex items-center gap-2 rounded-full bg-white border border-[#d8d0c4] px-4 py-2 text-xs sm:text-sm font-bold text-[#111] shadow-sm transition hover:bg-[#111] hover:text-white hover:border-[#111] active:scale-95"
+        >
+          <ChevronLeft className="h-4 w-4" /> Back to All Dramas
+        </Link>
+        <span className="text-xs font-semibold text-[#777] hidden sm:inline-block">
+          Editorial Catalog • {drama.genre[0]}
+        </span>
+      </div>
+
       <div className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
         <div className="group overflow-hidden rounded-[28px] shadow-[0_24px_60px_rgba(0,0,0,0.18)] bg-black border border-black/10">
           <img
@@ -109,9 +122,9 @@ export default function DramaDetailPage() {
 
             <Link
               href="/dramas"
-              className="rounded-full px-5 py-3 text-center text-xs sm:text-sm font-bold text-[#666] hover:text-[#111]"
+              className="rounded-full bg-[#f4eee6] border border-[#dcd4c7] px-6 py-3.5 text-center text-xs sm:text-sm font-bold text-[#111] shadow-sm transition hover:bg-[#111] hover:text-white active:scale-95"
             >
-              ← Back to catalog
+              ← Back to Catalog
             </Link>
           </div>
         </div>
