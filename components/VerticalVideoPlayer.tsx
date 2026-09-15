@@ -469,7 +469,7 @@ export function VerticalVideoPlayer({
       {isOpen && (
         <div
           ref={playerContainerRef}
-          className="fixed inset-0 z-[100] flex items-center justify-center p-2 min-[360px]:p-3 sm:p-4 md:p-6 lg:p-8 overflow-hidden select-none bg-[#070709]"
+          className="fixed inset-0 z-[100] flex items-start sm:items-center justify-center p-1.5 min-[360px]:p-2 sm:p-4 md:p-6 lg:p-8 pt-[max(0.5rem,env(safe-area-inset-top))] sm:pt-4 pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:pb-4 overflow-hidden select-none bg-[#070709]"
           role="dialog"
           aria-modal="true"
           aria-label={`${drama.title} - S1 • E${String(episodeNumber).padStart(2, "0")} player`}
@@ -499,7 +499,7 @@ export function VerticalVideoPlayer({
           {/* ==================================================== */}
           {/* 3 & 15. DESKTOP FLANKING CONTEXTUAL METADATA (LEFT/RIGHT) */}
           {/* ==================================================== */}
-          <div className="relative z-10 flex w-full max-w-[1400px] h-full items-center justify-center gap-6 lg:gap-10 my-auto">
+          <div className="relative z-10 flex w-full max-w-[1400px] h-full items-start sm:items-center justify-center gap-6 lg:gap-10 sm:my-auto">
 
             {/* DESKTOP LEFT: Series Context Panel (Visible on xl+ screens) */}
             <div className="hidden xl:flex flex-col justify-center w-[280px] text-white/90 space-y-4 shrink-0 pointer-events-auto">
@@ -577,7 +577,7 @@ export function VerticalVideoPlayer({
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.94, y: 10 }}
               transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
-              className="relative w-full max-w-[min(100%,calc((100dvh-5rem)*9/16))] sm:max-w-[420px] aspect-[9/16] max-h-[calc(100dvh-5rem)] sm:max-h-[86vh] overflow-hidden rounded-[24px] sm:rounded-[32px] bg-black shadow-[0_30px_100px_rgba(0,0,0,0.98)] border border-white/15 flex flex-col justify-between select-none my-auto shrink-0 group"
+              className="relative w-full max-w-[min(100%,calc((100dvh-1.25rem)*9/16))] sm:max-w-[420px] aspect-[9/16] max-h-[calc(100dvh-1.25rem)] sm:max-h-[86vh] overflow-hidden rounded-[20px] sm:rounded-[32px] bg-black shadow-[0_30px_100px_rgba(0,0,0,0.98)] border border-white/15 flex flex-col justify-between select-none sm:my-auto shrink-0 group"
             >
               {/* Dynamic Video Scene Layer (Cinema Quality Simulation) */}
               <div className="absolute inset-0 overflow-hidden">
@@ -817,7 +817,7 @@ export function VerticalVideoPlayer({
               {/* 5. TOP VIDEO CONTROLS OVERLAY                        */}
               {/* ==================================================== */}
               <div
-                className={`relative z-30 p-3 sm:p-4 transition-opacity duration-300 ${
+                className={`relative z-30 p-2 min-[360px]:p-2.5 sm:p-4 transition-opacity duration-300 ${
                   showControls && !isCompleted ? "opacity-100" : "opacity-0 pointer-events-none"
                 }`}
               >
@@ -1016,7 +1016,7 @@ export function VerticalVideoPlayer({
               {/* ==================================================== */}
               {/* 8. SYNCHRONIZED DIALOGUE SUBTITLE CAPTIONS           */}
               {/* ==================================================== */}
-              <div className="relative z-30 p-2.5 min-[360px]:p-3 sm:p-4 pt-0">
+              <div className="relative z-30 p-2 min-[360px]:p-2.5 sm:p-4 pt-0 pb-[max(0.375rem,env(safe-area-inset-bottom))] sm:pb-3">
                 {currentSubtitleText && (
                   <div className="mb-2 px-2 text-center pointer-events-none">
                     <motion.span

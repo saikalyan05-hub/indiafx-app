@@ -42,7 +42,7 @@ export default function RootLayout({
       >
         <CinematicBackground />
         <Navbar />
-        <main className="relative z-10 min-h-screen overflow-x-clip pb-[calc(5rem+env(safe-area-inset-bottom,16px))] lg:pb-0">{children}</main>
+        <main className="relative min-h-screen overflow-x-clip pb-[calc(5rem+env(safe-area-inset-bottom,16px))] lg:pb-0">{children}</main>
         <Footer />
         <BottomNavigation />
       </body>
