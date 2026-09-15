@@ -1,0 +1,212 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #f7f5f2;
+  --bg-soft: #fffdfb;
+  --ink: #141414;
+  --ink-soft: #4a4a4a;
+  --muted: #8a8680;
+  --line: #ece8e3;
+  --red: #e31c3d;
+  --red-deep: #c41230;
+  --orange: #f59e0b;
+  --gold: #e8b86d;
+  --shadow: 0 18px 50px rgba(20, 20, 20, 0.08);
+  --shadow-float: 0 30px 70px rgba(20, 20, 20, 0.14);
+  --radius: 22px;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-ink: var(--ink);
+  --color-red: var(--red);
+  --font-sans: var(--font-inter);
+  --font-display: var(--font-playfair);
+  --font-script: var(--font-caveat);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+  content-visibility: auto;
+}
+
+::selection {
+  background: #ffd6de;
+  color: #141414;
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.is-dragging {
+  cursor: grabbing !important;
+  user-select: none;
+}
+
+.logo-fx {
+  background: linear-gradient(90deg, #f59e0b 0%, #ef4444 52%, #e11d48 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.magazine-stack {
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.paper-sheet {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.08)),
+    repeating-linear-gradient(
+      90deg,
+      #d7d2cc 0 1px,
+      transparent 1px 18px
+    ),
+    #efeae3;
+}
+
+.focus-ring:focus-visible {
+  outline: 2px solid var(--red);
+  outline-offset: 3px;
+}
+
+/* Premium animation language — GPU-only (transform / opacity) */
+.fx-press {
+  transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.fx-press:active {
+  transform: scale(0.985);
+}
+
+.fx-arrow {
+  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.group:hover .fx-arrow,
+a:hover .fx-arrow {
+  transform: translateX(3px);
+}
+
+.fx-img {
+  transition: transform 700ms cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+.group:hover .fx-img {
+  transform: scale(1.045);
+}
+
+.fx-search {
+  transition:
+    box-shadow 280ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 280ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.fx-search:hover {
+  box-shadow: 0 6px 18px rgba(20, 20, 20, 0.07);
+}
+.fx-search:focus-visible,
+.fx-search:focus-within {
+  box-shadow: 0 0 0 2px rgba(227, 28, 61, 0.28), 0 8px 22px rgba(20, 20, 20, 0.08);
+}
+
+/* Editorial Dot Matrix Grid System (Mobile & Desktop GPU Pattern) */
+.fx-dot-pattern {
+  background-image: radial-gradient(circle at 1px 1px, rgba(20, 20, 20, 0.078) 1.1px, transparent 0);
+  background-size: 20px 20px;
+}
+
+@media (min-width: 640px) {
+  .fx-dot-pattern {
+    background-image: radial-gradient(circle at 1px 1px, rgba(20, 20, 20, 0.085) 1.2px, transparent 0);
+    background-size: 26px 26px;
+  }
+}
+
+@keyframes fx-pulse-once {
+  0% { transform: scale(1); opacity: 1; }
+  55% { transform: scale(1.55); opacity: 0.55; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.fx-notify-dot {
+  animation: fx-pulse-once 2.4s cubic-bezier(0.22, 1, 0.36, 1) 2;
+}
+
+@keyframes fx-film-drift {
+  0% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(0, -10px, 0); }
+  100% { transform: translate3d(0, 0, 0); }
+}
+
+.fx-ambient-drift {
+  animation: fx-film-drift 14s ease-in-out infinite;
+}
+
+@keyframes fx-glow-breathe {
+  0%, 100% { opacity: 0.72; }
+  50% { opacity: 0.95; }
+}
+
+.fx-glow-breathe {
+  animation: fx-glow-breathe 10s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .fx-press:active,
+  .group:hover .fx-img,
+  .group:hover .fx-arrow,
+  a:hover .fx-arrow {
+    transform: none;
+  }
+
+  .fx-notify-dot,
+  .fx-ambient-drift,
+  .fx-glow-breathe {
+    animation: none !important;
+  }
+}
