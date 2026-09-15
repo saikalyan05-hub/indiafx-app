@@ -934,24 +934,6 @@ export function VerticalVideoPlayer({
                     >
                       <Play className="h-9 w-9 sm:h-10 sm:w-10 fill-white ml-1" />
                     </button>
-
-                    {/* Contextual Paused Info */}
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.1 }}
-                      className="mt-5 space-y-1"
-                    >
-                      <span className="inline-block rounded-full bg-black/60 px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white/80 border border-white/10">
-                        Paused • S1 E{String(episodeNumber).padStart(2, "0")}
-                      </span>
-                      <h4 className="font-[family-name:var(--font-playfair)] text-lg sm:text-xl font-bold text-white drop-shadow-md">
-                        {currentEp.title}
-                      </h4>
-                      <p className="text-xs text-white/70 line-clamp-2 max-w-[260px] mx-auto">
-                        {currentEp.synopsis || drama.description}
-                      </p>
-                    </motion.div>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -1086,52 +1068,35 @@ export function VerticalVideoPlayer({
               </AnimatePresence>
 
               {/* ==================================================== */}
-              {/* 5. TOP VIDEO CONTROLS OVERLAY                        */}
+              {/* 5. TOP VIDEO CONTROLS OVERLAY (CLEAN BACK BUTTON)    */}
               {/* ==================================================== */}
               <div
-                className={`relative z-30 p-2 min-[360px]:p-2.5 sm:p-4 transition-opacity duration-300 ${
+                className={`relative z-30 p-2.5 sm:p-4 transition-opacity duration-300 ${
                   showControls && !isCompleted ? "opacity-100" : "opacity-0 pointer-events-none"
                 }`}
               >
                 <div className="flex items-center justify-between gap-2">
-                  {/* LEFT: Back Button + Series Title / Episode Badge */}
-                  <div className="flex items-center gap-2 min-w-0">
-                    <button
-                      onClick={() => {
-                        sound.playClick(500);
-                        onClose();
-                      }}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/85 backdrop-blur-md text-white border border-white/30 hover:bg-[#e31c3d] hover:border-[#e31c3d] transition active:scale-95 shrink-0 shadow-md text-xs font-bold"
-                      aria-label="Back / Close player"
-                      title="Back to Catalog"
-                    >
-                      <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
-                      <span className="text-white text-xs font-bold">Back</span>
-                    </button>
+                  {/* Clean Top-Left Back Button */}
+                  <button
+                    onClick={() => {
+                      sound.playClick(500);
+                      onClose();
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-black/80 backdrop-blur-md text-white border border-white/25 hover:bg-[#e31c3d] hover:border-[#e31c3d] transition active:scale-95 shrink-0 shadow-lg text-xs font-bold"
+                    aria-label="Back to catalog"
+                    title="Back to Catalog"
+                  >
+                    <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+                    <span className="text-white text-xs font-bold">Back</span>
+                  </button>
 
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <span className="rounded-md bg-[#e31c3d] px-1.5 py-0.5 text-[9px] sm:text-[10px] font-extrabold uppercase tracking-wider text-white">
-                          S1 • E{String(episodeNumber).padStart(2, "0")}
-                        </span>
-                        <span className="rounded-md bg-white/20 backdrop-blur-md px-1.5 py-0.5 text-[9px] sm:text-[10px] font-bold text-white/90 border border-white/10 hidden min-[380px]:inline-block">
-                          {quality.toUpperCase()}
-                        </span>
-                      </div>
-                      <h3 className="font-[family-name:var(--font-playfair)] text-xs sm:text-sm font-bold text-white truncate drop-shadow mt-0.5">
-                        {drama.title}
-                      </h3>
-                    </div>
-                  </div>
-
-                  {/* RIGHT: Quick Controls (Subtitles, Quality, Info, Fullscreen, Close) */}
+                  {/* Minimal Subtitle & Fullscreen Controls */}
                   <div className="flex items-center gap-1.5 shrink-0">
                     {/* Subtitle Toggle */}
                     <button
                       onClick={() => {
                         sound.playClick(650);
                         setShowSubtitleMenu((v) => !v);
-                        setShowQualityMenu(false);
                         setShowSpeedMenu(false);
                       }}
                       className={`grid h-8 w-8 place-items-center rounded-full backdrop-blur-md border transition active:scale-95 ${
@@ -1145,38 +1110,6 @@ export function VerticalVideoPlayer({
                       <Subtitles className="h-4 w-4" />
                     </button>
 
-                    {/* Quality Selector */}
-                    <button
-                      onClick={() => {
-                        sound.playClick(650);
-                        setShowQualityMenu((v) => !v);
-                        setShowSubtitleMenu(false);
-                        setShowSpeedMenu(false);
-                      }}
-                      className="grid h-8 w-8 place-items-center rounded-full bg-black/50 backdrop-blur-md text-white border border-white/20 hover:bg-black/70 transition active:scale-95"
-                      title="Video Quality"
-                      aria-label="Select video quality"
-                    >
-                      <Settings className="h-4 w-4" />
-                    </button>
-
-                    {/* Episode Info Panel Toggle */}
-                    <button
-                      onClick={() => {
-                        sound.playClick(650);
-                        setShowInfoPanel((v) => !v);
-                      }}
-                      className={`grid h-8 w-8 place-items-center rounded-full backdrop-blur-md border transition active:scale-95 ${
-                        showInfoPanel
-                          ? "bg-white text-[#111] border-white"
-                          : "bg-black/50 border-white/20 text-white hover:bg-black/70"
-                      }`}
-                      title="Episode Information"
-                      aria-label="Episode details"
-                    >
-                      <Info className="h-4 w-4" />
-                    </button>
-
                     {/* Fullscreen Toggle */}
                     <button
                       onClick={toggleFullscreen}
@@ -1185,18 +1118,6 @@ export function VerticalVideoPlayer({
                       aria-label="Fullscreen"
                     >
                       {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
-                    </button>
-
-                    {/* Close Player */}
-                    <button
-                      onClick={() => {
-                        sound.playClick(500);
-                        onClose();
-                      }}
-                      className="grid h-8 w-8 place-items-center rounded-full bg-black/50 backdrop-blur-md text-white border border-white/20 hover:bg-[#e31c3d] hover:border-[#e31c3d] transition active:scale-95"
-                      aria-label="Close"
-                    >
-                      <X className="h-4 w-4" />
                     </button>
                   </div>
                 </div>
@@ -1509,61 +1430,6 @@ export function VerticalVideoPlayer({
               </div>
 
               {/* ==================================================== */}
-              {/* 7. QUALITY SELECTOR POPOVER MODAL                    */}
-              {/* ==================================================== */}
-              <AnimatePresence>
-                {showQualityMenu && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="absolute top-16 right-3 z-50 w-64 rounded-3xl bg-[#18181c]/95 border border-white/20 p-3 shadow-2xl backdrop-blur-2xl text-white"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <div className="flex items-center justify-between border-b border-white/10 pb-2 mb-2">
-                      <p className="text-xs font-bold uppercase tracking-wider text-white/70 flex items-center gap-1.5">
-                        <Settings className="h-3.5 w-3.5 text-[#e31c3d]" /> Stream Quality
-                      </p>
-                      <button
-                        onClick={() => setShowQualityMenu(false)}
-                        className="text-white/60 hover:text-white"
-                      >
-                        <X className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                    <div className="space-y-1">
-                      {qualityOptions.map((opt) => (
-                        <button
-                          key={opt.id}
-                          onClick={() => {
-                            sound.playClick(750);
-                            setQuality(opt.id);
-                            setShowQualityMenu(false);
-                          }}
-                          className={`flex items-center justify-between w-full p-2 rounded-2xl text-left transition ${
-                            quality === opt.id
-                              ? "bg-[#e31c3d] text-white font-bold"
-                              : "hover:bg-white/10 text-white/80"
-                          }`}
-                        >
-                          <div>
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-xs">{opt.label}</span>
-                              <span className="rounded bg-black/40 px-1 py-0.2 text-[9px] font-bold">
-                                {opt.badge}
-                              </span>
-                            </div>
-                            <p className="text-[10px] text-white/60 leading-tight">{opt.desc}</p>
-                          </div>
-                          {quality === opt.id && <Check className="h-4 w-4 shrink-0" />}
-                        </button>
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {/* ==================================================== */}
               {/* 8. SUBTITLE (CC) SELECTOR POPOVER MODAL              */}
               {/* ==================================================== */}
               <AnimatePresence>
@@ -1605,78 +1471,6 @@ export function VerticalVideoPlayer({
                           {subtitleLang === opt.id && <Check className="h-4 w-4 shrink-0" />}
                         </button>
                       ))}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {/* ==================================================== */}
-              {/* 9. COMPLETE EPISODE INFORMATION PANEL (COLLAPSIBLE)  */}
-              {/* ==================================================== */}
-              <AnimatePresence>
-                {showInfoPanel && (
-                  <motion.div
-                    initial={{ y: "100%" }}
-                    animate={{ y: 0 }}
-                    exit={{ y: "100%" }}
-                    transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                    className="absolute inset-x-0 bottom-0 z-50 rounded-t-[28px] bg-[#141418]/98 border-t border-white/20 p-5 shadow-[0_-20px_50px_rgba(0,0,0,0.8)] backdrop-blur-2xl text-white max-h-[80%] overflow-y-auto"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <div className="flex items-center justify-between border-b border-white/10 pb-3">
-                      <div>
-                        <span className="rounded bg-[#e31c3d] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
-                          S1 • E{String(episodeNumber).padStart(2, "0")}
-                        </span>
-                        <h3 className="font-[family-name:var(--font-playfair)] text-base font-bold text-white mt-1">
-                          {currentEp.title}
-                        </h3>
-                      </div>
-                      <button
-                        onClick={() => setShowInfoPanel(false)}
-                        className="grid h-8 w-8 place-items-center rounded-full bg-white/10 hover:bg-white/20 text-white"
-                        aria-label="Close panel"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
-                    </div>
-
-                    <div className="mt-3.5 space-y-3.5 text-xs">
-                      <div>
-                        <p className="font-bold text-white/50 uppercase tracking-wider text-[10px]">
-                          Episode Synopsis
-                        </p>
-                        <p className="mt-1 text-white/85 leading-relaxed">
-                          {currentEp.synopsis || drama.description}
-                        </p>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-2.5 rounded-2xl bg-white/5 p-3 border border-white/10">
-                        <div>
-                          <p className="font-bold text-white/50 text-[10px] uppercase">Series</p>
-                          <p className="font-semibold text-white truncate">{drama.title}</p>
-                        </div>
-                        <div>
-                          <p className="font-bold text-white/50 text-[10px] uppercase">Director</p>
-                          <p className="font-semibold text-white truncate">{drama.director}</p>
-                        </div>
-                        <div>
-                          <p className="font-bold text-white/50 text-[10px] uppercase">Cast</p>
-                          <p className="font-semibold text-white truncate">{drama.cast.join(", ")}</p>
-                        </div>
-                        <div>
-                          <p className="font-bold text-white/50 text-[10px] uppercase">Rating</p>
-                          <p className="font-semibold text-white">{drama.rating}</p>
-                        </div>
-                        <div>
-                          <p className="font-bold text-white/50 text-[10px] uppercase">Audio</p>
-                          <p className="font-semibold text-white">Hindi • Tamil • Telugu</p>
-                        </div>
-                        <div>
-                          <p className="font-bold text-white/50 text-[10px] uppercase">Quality</p>
-                          <p className="font-semibold text-[#e31c3d]">4K Ultra HDR • Dolby 5.1</p>
-                        </div>
-                      </div>
                     </div>
                   </motion.div>
                 )}
